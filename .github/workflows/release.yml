@@ -31,26 +31,13 @@ jobs:
           sed -i "s/^__version__ = .*/__version__ = \"$VERSION\"/" easybackup/__init__.py
           grep __version__ easybackup/__init__.py
 
-      - name: Install build tools
-        run: |
-          python -m venv .venv
-          .venv\Scripts\python -m pip install --upgrade pip
-          .venv\Scripts\pip install -r requirements-dev.txt
-          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
-            choco install innosetup --no-progress -y
-          }
+      - name: Build the installer (PyInstaller bootloader compiled from source)
+        run: .\tools\ci_build.ps1 -Version $env:VERSION
 
-      - name: Build the engine and run the tests
-        shell: cmd
+      - name: Run the tests
         env:
           QT_QPA_PLATFORM: offscreen
-        run: |
-          call build_engine.bat || exit /b 1
-          .venv\Scripts\python -m pytest -q
-
-      - name: Build the installer
-        shell: cmd
-        run: call build_installer.bat %VERSION%
+        run: .venv\Scripts\python -m pytest -q
 
       - name: Prepare release files
         shell: bash

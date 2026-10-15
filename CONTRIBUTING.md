@@ -70,3 +70,18 @@ add the matching `T()` texts in the engine, and add the language to `[Languages]
 Push a tag such as `v1.2.0`. The [release workflow](.github/workflows/release.yml) builds the
 engine, the app and the installer, then publishes `EasyBackup-Setup.exe` on the GitHub release.
 The website's download button always points to the latest release.
+
+Every push to `main` also builds a test installer, available for 14 days in the *Artifacts*
+section of the CI run.
+
+The release build compiles PyInstaller's bootloader from source (`tools/ci_build.ps1`) and
+gives every executable Windows version information, which reduces antivirus false positives.
+
+**Code signing**: `build_installer.bat` signs the app, the engine, the installer and the
+uninstaller when the `EB_SIGN` environment variable contains a signing command (the file to
+sign is appended), for example:
+
+```bat
+set EB_SIGN=signtool sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 /a
+build_installer.bat
+```

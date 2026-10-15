@@ -44,6 +44,14 @@ CloseApplications=yes
 VersionInfoCompany={#AppPublisher}
 VersionInfoProductName={#AppName}
 VersionInfoVersion={#AppVersion}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoDescription={#AppName} installer
+VersionInfoCopyright=Copyright (C) {#AppPublisher}. Licensed under the GNU GPL v3.
+#ifdef SIGN
+; signature de l'installeur et du désinstalleur (outil « signer » passé par build_installer.bat)
+SignTool=signer
+SignedUninstaller=yes
+#endif
 
 ; La langue choisie au début de l'installation est aussi celle de l'application.
 ShowLanguageDialog=yes

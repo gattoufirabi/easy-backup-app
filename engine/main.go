@@ -18,7 +18,8 @@ import (
 	"sync"
 )
 
-const version = "1.0.0"
+// version : fixée à la compilation (-ldflags "-X main.version=…", voir build_engine.bat)
+var version = "dev"
 
 // english : langue des messages (--lang en), français par défaut.
 var english bool

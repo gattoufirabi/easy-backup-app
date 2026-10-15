@@ -42,3 +42,32 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python -m pytest -v
+
+  # Construit un installeur de test à chaque push sur main (artefact téléchargeable 14 jours).
+  installer:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: engine/go.mod
+          cache-dependency-path: engine/go.mod
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path easybackup\__init__.py -Pattern '^__version__ = "([^"]+)"').Matches[0].Groups[1].Value
+          .\tools\ci_build.ps1 -Version $version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EasyBackup-Setup-${{ github.sha }}
+          path: dist/EasyBackup-Setup-*.exe
+          retention-days: 14
