@@ -1,0 +1,71 @@
+name: Release
+
+# Pousser un tag « v1.2.3 » construit l'installeur et le publie sur une release GitHub.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: engine/go.mod
+          cache-dependency-path: engine/go.mod
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Version from the tag
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          sed -i "s/^__version__ = .*/__version__ = \"$VERSION\"/" easybackup/__init__.py
+          grep __version__ easybackup/__init__.py
+
+      - name: Install build tools
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python -m pip install --upgrade pip
+          .venv\Scripts\pip install -r requirements-dev.txt
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build the engine and run the tests
+        shell: cmd
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          call build_engine.bat || exit /b 1
+          .venv\Scripts\python -m pytest -q
+
+      - name: Build the installer
+        shell: cmd
+        run: call build_installer.bat %VERSION%
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          cd dist
+          cp "EasyBackup-Setup-$VERSION.exe" EasyBackup-Setup.exe
+          sha256sum EasyBackup-Setup.exe "EasyBackup-Setup-$VERSION.exe" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Easy Backup ${{ env.VERSION }}
+          generate_release_notes: true
+          files: |
+            dist/EasyBackup-Setup.exe
+            dist/EasyBackup-Setup-${{ env.VERSION }}.exe
+            dist/SHA256SUMS.txt

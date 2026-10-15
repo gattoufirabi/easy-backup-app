@@ -1,0 +1,9 @@
+.venv/
+bin/
+build/
+dist/
+__pycache__/
+.pytest_cache/
+.claude/
+*.ebpart
+*.lnk
